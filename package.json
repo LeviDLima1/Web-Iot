@@ -1,0 +1,26 @@
+{
+  "name": "pettracker",
+  "version": "1.0.0",
+  "description": "Rastreador de Pets",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeviDLima1/Web-Iot.git"
+  },
+  "author": "Paulo Henrique & Levi Duarte",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LeviDLima1/Web-Iot/issues"
+  },
+  "homepage": "https://github.com/LeviDLima1/Web-Iot#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "sequelize": "^6.37.7"
+  }
+}
