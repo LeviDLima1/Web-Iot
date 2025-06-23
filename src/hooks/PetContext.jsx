@@ -1,11 +1,13 @@
-import React, { createContext, useContext, useReducer, useCallback } from 'react';
-import { petsData as initialPetsData } from '../components/HomePageFoulder/initialPetsData';
+import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const PetContext = createContext();
 
-// Reducer for allPets (copiado de HomePage.jsx)
+// Reducer for allPets
 const petsReducer = (state, action) => {
     switch (action.type) {
+        case 'SET_PETS':
+            return action.payload;
         case 'UPDATE_PET_LOCATION':
             return state.map(pet => {
                 if (pet.macId === action.payload.petId) {
@@ -51,12 +53,75 @@ const petsReducer = (state, action) => {
 };
 
 export const PetProvider = ({ children }) => {
-    const [allPets, dispatchPets] = useReducer(petsReducer, initialPetsData);
+    const { user, token } = useAuth();
+    const [allPets, dispatchPets] = useReducer(petsReducer, []);
+
+    // Função para buscar pets do usuário logado
+    const fetchPets = useCallback(async () => {
+        if (!user || !token) return;
+        try {
+            const response = await fetch(`http://192.168.18.31:3001/api/pets/user/${user.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                dispatchPets({ type: 'SET_PETS', payload: data });
+            }
+        } catch (err) {
+            console.error('Erro ao buscar pets do usuário:', err);
+        }
+    }, [user, token]);
+
+    // Buscar pets ao iniciar
+    useEffect(() => {
+        fetchPets();
+    }, [fetchPets]);
 
     // Funções auxiliares para CRUD que usarão dispatchPets
-    const addPet = useCallback((newPet) => {
-        dispatchPets({ type: 'ADD_PET', payload: newPet });
-    }, []);
+    const addPet = useCallback(async (newPet) => {
+        // O cadastro já é feito via API na tela de cadastro, aqui só força o refresh
+        await fetchPets();
+    }, [fetchPets]);
+
+    const updatePet = useCallback(async (petId, updatedData) => {
+        if (!token) return;
+        try {
+            const response = await fetch(`http://192.168.18.31:3001/api/pets/${petId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(updatedData)
+            });
+            const data = await response.json();
+            if (response.ok) {
+                dispatchPets({ type: 'UPDATE_PET', payload: data });
+            } else {
+                console.error('Erro ao atualizar pet:', data.error);
+            }
+        } catch (err) {
+            console.error('Erro de conexão ao atualizar pet:', err);
+        }
+    }, [token]);
+
+    const deletePet = useCallback(async (petId) => {
+        if (!token) return;
+        try {
+            const response = await fetch(`http://192.168.18.31:3001/api/pets/${petId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                dispatchPets({ type: 'DELETE_PET', payload: petId });
+            } else {
+                const data = await response.json();
+                console.error('Erro ao remover pet:', data.error);
+            }
+        } catch (err) {
+            console.error('Erro de conexão ao remover pet:', err);
+        }
+    }, [token]);
 
     const updatePetLocation = useCallback((petId, location) => {
         dispatchPets({ type: 'UPDATE_PET_LOCATION', payload: { petId, location } });
@@ -68,14 +133,6 @@ export const PetProvider = ({ children }) => {
 
     const updatePetHomeArea = useCallback((petId, homeArea) => {
         dispatchPets({ type: 'UPDATE_PET_HOME_AREA', payload: { petId, homeArea } });
-    }, []);
-
-    const updatePet = useCallback((petId, updatedData) => {
-        dispatchPets({ type: 'UPDATE_PET', payload: { id: petId, ...updatedData } });
-    }, []);
-
-    const deletePet = useCallback((petId) => {
-        dispatchPets({ type: 'DELETE_PET', payload: petId });
     }, []);
 
     const getPetById = useCallback((petId) => {
@@ -93,7 +150,7 @@ export const PetProvider = ({ children }) => {
                 updatePetAddress,
                 updatePetHomeArea,
                 getPetById,
-                dispatchPets // Mantido para flexibilidade, caso actions mais complexas sejam necessárias
+                dispatchPets
             }}
         >
             {children}

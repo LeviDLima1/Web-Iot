@@ -5,6 +5,7 @@ import Header from "../HeaderFoulder/Header";
 import { useNotification } from '../../hooks/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { usePet } from '../../hooks/PetContext';
+import { useAuth } from '../../hooks/AuthContext';
 import { FaPaw, FaMapMarkerAlt, FaShieldAlt, FaUser, FaCog, FaArrowLeft } from 'react-icons/fa';
 
 export default function RegisterPetPage() {
@@ -26,15 +27,18 @@ export default function RegisterPetPage() {
     const { addNotification } = useNotification();
     const navigate = useNavigate();
     const { addPet } = usePet();
+    const { user, token } = useAuth();
 
-    const onValidSubmit = (data) => {
+    const onValidSubmit = async (data) => {
+        if (!user || !token) {
+            addNotification('Você precisa estar logado para cadastrar um pet.', 'error');
+            return;
+        }
         const newPetData = {
-            id: uuidv4(),
             name: data.name,
             breed: data.breed,
             age: data.age,
             macId: data.macId,
-            owner: data.owner,
             location: {
                 lat: data.locationLat,
                 lng: data.locationLng,
@@ -47,22 +51,39 @@ export default function RegisterPetPage() {
             isOnline: false,
             lastUpdate: new Date().toLocaleTimeString(),
             locationHistory: [],
+            userId: user.id
         };
-        
-        addPet(newPetData);
-        addNotification(`Pet ${newPetData.name} cadastrado com sucesso!`, 'success', 5000);
-        reset();
-        navigate('/');
+        try {
+            const response = await fetch('http://192.168.18.31:3001/api/pets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(newPetData)
+            });
+            const dataRes = await response.json();
+            if (response.ok) {
+                addPet(dataRes); // Atualiza o contexto local
+                addNotification(`Pet ${dataRes.name} cadastrado com sucesso!`, 'success', 5000);
+                reset();
+                navigate('/pets');
+            } else {
+                addNotification(dataRes.error || 'Erro ao cadastrar pet.', 'error');
+            }
+        } catch (err) {
+            addNotification('Erro de conexão com o servidor.', 'error');
+        }
     };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-primary-50 via-primary-100 to-accent-50">
             
             <div className="px-4 py-8 sm:px-6 lg:px-8">
-                <div className="max-w-4xl mx-auto">
+                <div className="mx-auto max-w-4xl">
                     {/* Header da Página */}
                     <div className="mb-8 text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 mb-4 text-white rounded-full shadow-lg bg-gradient-to-r from-primary-500 to-accent-500">
+                        <div className="inline-flex justify-center items-center mb-4 w-16 h-16 text-white bg-gradient-to-r rounded-full shadow-lg from-primary-500 to-accent-500">
                             <FaPaw className="w-8 h-8 text-gray-800" />
                         </div>
                         <h1 className="mb-2 text-4xl font-bold text-gray-800">Cadastrar Novo Pet</h1>
@@ -73,19 +94,19 @@ export default function RegisterPetPage() {
                     <div className="mb-6">
                         <button
                             onClick={() => navigate('/')}
-                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 transition-all bg-white rounded-lg shadow-sm cursor-pointer hover:shadow-md hover:bg-gray-50"
+                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg shadow-sm transition-all cursor-pointer hover:shadow-md hover:bg-gray-50"
                         >
-                            <FaArrowLeft className="w-4 h-4 mr-2" />
+                            <FaArrowLeft className="mr-2 w-4 h-4" />
                             Voltar ao Dashboard
                         </button>
                     </div>
 
-                    <div className="overflow-hidden bg-white shadow-2xl rounded-3xl">
+                    <div className="overflow-hidden bg-white rounded-3xl shadow-2xl">
                         <form onSubmit={handleSubmit(onValidSubmit)} className="p-8">
                             {/* Informações Básicas */}
                             <div className="mb-8">
                                 <div className="flex items-center mb-6">
-                                    <div className="flex items-center justify-center w-10 h-10 mr-3 text-white rounded-lg bg-gradient-to-r from-primary-500 to-primary-600">
+                                    <div className="flex justify-center items-center mr-3 w-10 h-10 text-white bg-gradient-to-r rounded-lg from-primary-500 to-primary-600">
                                         <FaUser className="w-5 h-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-800">Informações Básicas</h2>
@@ -101,7 +122,7 @@ export default function RegisterPetPage() {
                                             id="name"
                                             placeholder="Ex: Rex, Luna, Thor"
                                             {...register("name", { required: "Nome é obrigatório" })}
-                                            className="w-full px-4 py-3 text-gray-700 transition-all border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
                                         />
                                         {errors.name && (
                                             <p className="text-sm text-red-500">{errors.name.message}</p>
@@ -117,7 +138,7 @@ export default function RegisterPetPage() {
                                             id="breed"
                                             placeholder="Ex: Golden Retriever, Persa"
                                             {...register("breed")}
-                                            className="w-full px-4 py-3 text-gray-700 transition-all border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
                                         />
                                     </div>
 
@@ -130,7 +151,7 @@ export default function RegisterPetPage() {
                                             id="age"
                                             placeholder="Ex: 3 anos, 6 meses"
                                             {...register("age")}
-                                            className="w-full px-4 py-3 text-gray-700 transition-all border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
                                         />
                                     </div>
 
@@ -143,7 +164,7 @@ export default function RegisterPetPage() {
                                             id="owner"
                                             placeholder="Seu nome"
                                             {...register("owner")}
-                                            className="w-full px-4 py-3 text-gray-700 transition-all border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
                                         />
                                     </div>
 
@@ -156,7 +177,7 @@ export default function RegisterPetPage() {
                                             id="macId"
                                             placeholder="Ex: AA:BB:CC:DD:EE:FF"
                                             {...register("macId", { required: "ID da Coleira é obrigatório" })}
-                                            className="w-full px-4 py-3 text-gray-700 transition-all border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
                                         />
                                         {errors.macId && (
                                             <p className="text-sm text-red-500">{errors.macId.message}</p>
@@ -168,7 +189,7 @@ export default function RegisterPetPage() {
                             {/* Localização Inicial */}
                             <div className="mb-8">
                                 <div className="flex items-center mb-6">
-                                    <div className="flex items-center justify-center w-10 h-10 mr-3 text-white rounded-lg bg-gradient-to-r from-accent-500 to-accent-600">
+                                    <div className="flex justify-center items-center mr-3 w-10 h-10 text-white bg-gradient-to-r rounded-lg from-accent-500 to-accent-600">
                                         <FaMapMarkerAlt className="w-5 h-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-800">Localização Inicial</h2>
@@ -185,7 +206,7 @@ export default function RegisterPetPage() {
                                             id="locationLat"
                                             placeholder="Ex: -23.5505"
                                             {...register("locationLat", { valueAsNumber: true })}
-                                            className="w-full px-4 py-3 text-gray-700 transition-all border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
                                         />
                                     </div>
 
@@ -199,7 +220,7 @@ export default function RegisterPetPage() {
                                             id="locationLng"
                                             placeholder="Ex: -46.6333"
                                             {...register("locationLng", { valueAsNumber: true })}
-                                            className="w-full px-4 py-3 text-gray-700 transition-all border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
                                         />
                                     </div>
                                 </div>
@@ -208,13 +229,13 @@ export default function RegisterPetPage() {
                             {/* Zona Segura */}
                             <div className="mb-8">
                                 <div className="flex items-center mb-6">
-                                    <div className="flex items-center justify-center w-10 h-10 mr-3 text-white rounded-lg bg-gradient-to-r from-green-500 to-green-600">
+                                    <div className="flex justify-center items-center mr-3 w-10 h-10 text-white bg-gradient-to-r from-green-500 to-green-600 rounded-lg">
                                         <FaShieldAlt className="w-5 h-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-800">Zona Segura</h2>
                                 </div>
                                 
-                                <div className="p-6 border border-green-100 bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl">
+                                <div className="p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl border border-green-100">
                                     <p className="mb-4 text-sm text-gray-600">
                                         Configure a área onde seu pet pode circular livremente. Receberá alertas quando ele sair desta zona.
                                     </p>
@@ -230,7 +251,7 @@ export default function RegisterPetPage() {
                                                 id="homeAreaLat"
                                                 placeholder="Ex: -23.5505"
                                                 {...register("homeAreaLat", { valueAsNumber: true })}
-                                                className="w-full px-4 py-3 text-gray-700 transition-all border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+                                                className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
                                             />
                                         </div>
 
@@ -244,7 +265,7 @@ export default function RegisterPetPage() {
                                                 id="homeAreaLng"
                                                 placeholder="Ex: -46.6333"
                                                 {...register("homeAreaLng", { valueAsNumber: true })}
-                                                className="w-full px-4 py-3 text-gray-700 transition-all border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+                                                className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
                                             />
                                         </div>
 
@@ -261,7 +282,7 @@ export default function RegisterPetPage() {
                                                     valueAsNumber: true, 
                                                     min: { value: 0, message: "O raio não pode ser negativo" } 
                                                 })}
-                                                className="w-full px-4 py-3 text-gray-700 transition-all border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+                                                className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
                                             />
                                             {errors.homeAreaRadius && (
                                                 <p className="text-sm text-red-500">{errors.homeAreaRadius.message}</p>
@@ -276,15 +297,15 @@ export default function RegisterPetPage() {
                                 <button
                                     type="button"
                                     onClick={() => navigate('/')}
-                                    className="px-8 py-3 font-semibold text-gray-700 transition-all bg-gray-100 cursor-pointer rounded-xl hover:bg-gray-200 hover:shadow-md"
+                                    className="px-8 py-3 font-semibold text-gray-700 bg-gray-100 rounded-xl transition-all cursor-pointer hover:bg-gray-200 hover:shadow-md"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-8 py-3 font-semibold text-white transition-all transform bg-gray-800 cursor-pointer bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl hover:from-primary-600 hover:to-accent-600 hover:shadow-lg hover:scale-105"
+                                    className="px-8 py-3 font-semibold text-white bg-gray-800 bg-gradient-to-r rounded-xl transition-all transform cursor-pointer from-primary-500 to-accent-500 hover:from-primary-600 hover:to-accent-600 hover:shadow-lg hover:scale-105"
                                 >
-                                    <FaPaw className="inline w-4 h-4 mr-2" />
+                                    <FaPaw className="inline mr-2 w-4 h-4" />
                                     Cadastrar Pet
                                 </button>
                             </div>

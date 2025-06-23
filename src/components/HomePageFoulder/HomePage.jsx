@@ -28,6 +28,11 @@ const realTimeUpdatesReducer = (state, action) => {
     }
 };
 
+// Função utilitária para normalizar MAC ID (remove ':' e '-', deixa tudo minúsculo)
+function normalizeMacId(mac) {
+    return (mac || '').toLowerCase().replace(/[:\-]/g, '');
+}
+
 export default function HomePage() {
     const { isConnected, messages, sendMessage } = useWebSocket();
     const { addNotification } = useNotification();
@@ -47,6 +52,7 @@ export default function HomePage() {
     const [realTimeUpdates, dispatchRealTimeUpdates] = useReducer(realTimeUpdatesReducer, []);
     const [selectedPetHistory, setSelectedPetHistory] = useState(null);
     const [expandedPets, setExpandedPets] = useState([]);
+    const [selectedPetOnMap, setSelectedPetOnMap] = useState(null);
 
     const petInZoneStatus = useRef({});
     const lastProcessedMessageIndex = useRef(-1);
@@ -117,8 +123,12 @@ export default function HomePage() {
                 if (currentMessage.type === 'location_update') {
                     const { petId, location } = currentMessage.data;
 
+                    console.log('Mensagem recebida - petId:', petId);
+                    console.log('Pets cadastrados (macId):', allPets.map(p => p.macId));
+                    console.log('Normalizados:', allPets.map(p => normalizeMacId(p.macId)), 'vs', normalizeMacId(petId));
+
                     // Encontra o pet correspondente
-                    const petToUpdate = allPets.find(p => p.macId === petId);
+                    const petToUpdate = allPets.find(p => normalizeMacId(p.macId) === normalizeMacId(petId));
                     if (!petToUpdate) {
                         console.warn(`Pet com ID ${petId} não encontrado.`);
                         continue; // Pula para a próxima mensagem se o pet não for encontrado
@@ -128,7 +138,7 @@ export default function HomePage() {
                     updatePetLocation(petId, location);
 
                     // Geofencing logic usando a homeArea do pet
-                    const petToUpdateForGeofencing = allPets.find(p => p.macId === petId);
+                    const petToUpdateForGeofencing = allPets.find(p => normalizeMacId(p.macId) === normalizeMacId(petId));
                     if (!petToUpdateForGeofencing) {
                         console.warn(`Pet com ID ${petId} não encontrado para geofencing.`);
                         return; // Sai da função se o pet não for encontrado para geofencing
@@ -213,7 +223,7 @@ export default function HomePage() {
     }, []);
 
     const handleViewHistory = useCallback((petId) => {
-        const pet = allPets.find(p => p.macId === petId); // Usa allPets do contexto
+        const pet = allPets.find(p => normalizeMacId(p.macId) === normalizeMacId(petId)); // Usa allPets do contexto
         if (pet && pet.locationHistory) {
             setSelectedPetHistory(pet.locationHistory);
             console.log(`Visualizando histórico para ${pet.name}:`, pet.locationHistory);
@@ -238,15 +248,34 @@ export default function HomePage() {
         addNotification('Pet removido com sucesso!', 'success');
     }, [deletePet, addNotification]);
 
+    // Função para centralizar o mapa em um pet
+    const handleShowOnMap = useCallback((macId) => {
+        setSelectedPetOnMap(macId);
+    }, []);
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
-            <Header />
+            {/* Botões de navegação */}
+            <div className="flex gap-4 justify-end px-6 pt-6">
+                <button
+                    onClick={() => navigate('/pets')}
+                    className="px-4 py-2 text-white bg-gray-400 rounded-lg shadow transition cursor-pointer hover:bg-gray-500"
+                >
+                    Ver todos os pets
+                </button>
+                <button
+                    onClick={() => navigate('/register-pet')}
+                    className="px-4 py-2 text-white bg-green-500 rounded-lg shadow transition cursor-pointer hover:bg-green-600"
+                >
+                    Cadastrar novo pet
+                </button>
+            </div>
 
             {/* Dashboard Header */}
             <div className="px-6 py-8">
                 <div className="mx-auto max-w-7xl">
                     <div className="mb-8">
-                        <div className="flex items-center justify-between">
+                        <div className="flex justify-between items-center">
                             <div>
                                 <h1 className="mb-2 text-3xl font-bold text-gray-800">Dashboard</h1>
                                 <p className="text-gray-600">Monitoramento em tempo real dos seus pets</p>
@@ -264,7 +293,7 @@ export default function HomePage() {
                                 </div>
                                 <a
                                     href="/simulator"
-                                    className="px-4 py-2 text-sm text-white transition-colors rounded-lg bg-primary-400 hover:bg-primary-500"
+                                    className="px-4 py-2 text-sm text-white rounded-lg transition-colors bg-primary-400 hover:bg-primary-500"
                                 >
                                     Testar Coleira
                                 </a>
@@ -279,22 +308,22 @@ export default function HomePage() {
                     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                         {/* Mapa */}
                         <div className="lg:col-span-2">
-                            <div className="p-6 bg-white shadow-lg rounded-2xl">
-                                <div className="flex items-center justify-between mb-6">
+                            <div className="p-6 bg-white rounded-2xl shadow-lg">
+                                <div className="flex justify-between items-center mb-6">
                                     <h2 className="text-xl font-semibold text-gray-800">Localização em Tempo Real</h2>
                                     <div className="flex items-center space-x-4 text-sm">
                                         <div className="flex items-center">
-                                            <div className="w-3 h-3 mr-2 bg-green-500 rounded-full"></div>
+                                            <div className="mr-2 w-3 h-3 bg-green-500 rounded-full"></div>
                                             <span>Online</span>
                                         </div>
                                         <div className="flex items-center">
-                                            <div className="w-3 h-3 mr-2 bg-red-500 rounded-full"></div>
+                                            <div className="mr-2 w-3 h-3 bg-red-500 rounded-full"></div>
                                             <span>Offline</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="h-[500px] rounded-xl overflow-hidden">
-                                    <MapRender pets={allPets} historyPath={selectedPetHistory} />
+                                    <MapRender pets={allPets} historyPath={selectedPetHistory} selectedPetMacId={selectedPetOnMap} />
                                 </div>
                             </div>
                         </div>
@@ -302,7 +331,7 @@ export default function HomePage() {
                         {/* Lista de Pets */}
                         <div className="lg:col-span-1">
                             <div className="p-6 bg-white shadow-lg rounded-2xl h-[500px]">
-                                <div className="flex items-center justify-between mb-6">
+                                <div className="flex justify-between items-center mb-6">
                                     <h2 className="text-xl font-semibold text-gray-800">Seus Pets</h2>
                                     <div className="text-sm text-gray-500">
                                         {dashboardData.onlinePets}/{dashboardData.totalPets} online
@@ -317,6 +346,7 @@ export default function HomePage() {
                                         onUpdateHomeArea={handleUpdateHomeArea}
                                         onEditPet={handleEditPet}
                                         onDeletePet={handleDeletePet}
+                                        onShowOnMap={handleShowOnMap}
                                     />
                                 </div>
                             </div>

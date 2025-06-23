@@ -1,26 +1,32 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import React, { Suspense } from 'react';
+import { Routes, Route } from 'react-router-dom'
 
 // Páginas Principais
-import HomePage from '../components/HomePageFoulder/HomePage'
+const HomePage = React.lazy(() => import('../components/HomePageFoulder/HomePage'));
 
 // Páginas de Autenticação
-import LoginPage from '../components/LoginPageFoulder/LoginPage'
-import RegisterUser from '../components/RegisterUserFoulder/RegisterUser'
+const LoginPage = React.lazy(() => import('../components/LoginPageFoulder/LoginPage'));
+const RegisterUser = React.lazy(() => import('../components/RegisterUserFoulder/RegisterUser'));
 
 // Páginas do Usuário
-import UserProfile from '../components/UserProfileFoulder/UserProfile'
-import UserProfileConfig from '../components/UserProfileConfigFoulder/UserProfileConfig'
+const UserProfile = React.lazy(() => import('../components/UserProfileFoulder/UserProfile'));
+const UserProfileConfig = React.lazy(() => import('../components/UserProfileConfigFoulder/UserProfileConfig'));
 
 // Páginas de Gerenciamento de Pets
-import RegisterPetPage from '../components/RegisterPetPage/RegisterPetPage'
-import EditPetPage from '../components/EditPetPage/EditPetPage'
+const RegisterPetPage = React.lazy(() => import('../components/RegisterPetPage/RegisterPetPage'));
+const EditPetPage = React.lazy(() => import('../components/EditPetPage/EditPetPage'));
+const PetListPage = React.lazy(() => import('../components/PetListPage'));
 
 // Ferramentas de Desenvolvimento
-import PetTrackerSimulator from '../components/PetTrackerSimulator/PetTrackerSimulator'
+const PetTrackerSimulator = React.lazy(() => import('../components/PetTrackerSimulator/PetTrackerSimulator'));
 
 export default function RouterFunction() {
     return (
-        <BrowserRouter>
+        <Suspense fallback={
+            <div className="flex justify-center items-center min-h-screen text-xl text-white bg-gradient-to-br from-primary-300 to-primary-400">
+                Carregando...
+            </div>
+        }>
             <Routes>
                 {/* ===== ROTAS PRINCIPAIS ===== */}
                 <Route path="/" element={<HomePage />} />
@@ -36,19 +42,20 @@ export default function RouterFunction() {
                 {/* ===== ROTAS DE GERENCIAMENTO DE PETS ===== */}
                 <Route path="/register-pet" element={<RegisterPetPage />} />
                 <Route path="/edit-pet/:petId" element={<EditPetPage />} />
+                <Route path="/pets" element={<PetListPage />} />
 
                 {/* ===== FERRAMENTAS DE DESENVOLVIMENTO ===== */}
                 <Route path="/simulator" element={<PetTrackerSimulator />} />
 
                 {/* ===== ROTA 404 - PÁGINA NÃO ENCONTRADA ===== */}
                 <Route path="*" element={
-                    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary-300 to-primary-400">
+                    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-primary-300 to-primary-400">
                         <div className="text-center">
                             <h1 className="mb-4 text-6xl font-bold text-gray-800">404</h1>
                             <p className="mb-8 text-xl text-white">Página não encontrada</p>
                             <a 
                                 href="/" 
-                                className="px-6 py-3 transition-colors bg-white rounded-lg text-primary-400 hover:bg-gray-100"
+                                className="px-6 py-3 bg-white rounded-lg transition-colors text-primary-400 hover:bg-gray-100"
                             >
                                 Voltar ao Início
                             </a>
@@ -56,6 +63,6 @@ export default function RouterFunction() {
                     </div>
                 } />
             </Routes>
-        </BrowserRouter>
+        </Suspense>
     )
 }

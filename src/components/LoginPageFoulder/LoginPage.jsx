@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import logo from "../../assets/Header-assets/Logo.png";
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from '../../hooks/AuthContext';
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
@@ -9,11 +10,36 @@ export default function LoginPage() {
         email: '',
         password: ''
     });
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const navigate = useNavigate();
+    const { login } = useAuth();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Aqui você implementará a lógica de login
-        console.log('Dados do formulário:', formData);
+        setError('');
+        setSuccess('');
+        console.log('Enviando dados de login:', formData);
+        try {
+            const response = await fetch('http://192.168.18.31:3001/api/users/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            const data = await response.json();
+            console.log('Resposta do backend (login):', data);
+            if (response.ok) {
+                setSuccess('Login realizado com sucesso! Redirecionando...');
+                login(data.user, data.token);
+                setTimeout(() => {
+                    navigate('/');
+                }, 1200);
+            } else {
+                setError(data.error || 'Erro ao fazer login.');
+            }
+        } catch (err) {
+            setError('Erro de conexão com o servidor.');
+        }
     };
 
     const handleChange = (e) => {
@@ -25,26 +51,28 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-primary-300 to-primary-400">
+        <div className="flex justify-center items-center p-4 min-h-screen bg-gradient-to-br from-primary-300 to-primary-400">
             <div className="w-full max-w-md">
                 {/* Card de Login */}
-                <div className="overflow-hidden bg-white shadow-xl rounded-2xl">
+                <div className="overflow-hidden bg-white rounded-2xl shadow-xl">
                     {/* Cabeçalho */}
                     <div className="p-8 text-center">
-                        <img src={logo} alt="Logo" className="w-32 h-32 mx-auto mb-4" />
+                        <img src={logo} alt="Logo" className="mx-auto mb-4 w-32 h-32" />
                         <h2 className="mb-2 text-3xl font-bold text-gray-800">Bem-vindo de volta!</h2>
                         <p className="text-gray-600">Entre com suas credenciais para acessar sua conta</p>
                     </div>
 
                     {/* Formulário */}
                     <form onSubmit={handleSubmit} className="p-8">
+                        {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
+                        {success && <div className="mb-4 text-sm text-green-600">{success}</div>}
                         {/* Campo de Email */}
                         <div className="mb-6">
                             <label className="block mb-2 text-sm font-semibold text-gray-700">
                                 Email
                             </label>
                             <div className="relative">
-                                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
                                     <FaEnvelope className="text-gray-400" />
                                 </div>
                                 <input
@@ -52,7 +80,7 @@ export default function LoginPage() {
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className="w-full py-2 pl-10 pr-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
+                                    className="py-2 pr-3 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
                                     placeholder="seu@email.com"
                                     required
                                 />
@@ -65,7 +93,7 @@ export default function LoginPage() {
                                 Senha
                             </label>
                             <div className="relative">
-                                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
                                     <FaLock className="text-gray-400" />
                                 </div>
                                 <input
@@ -73,13 +101,13 @@ export default function LoginPage() {
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="w-full py-2 pl-10 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
+                                    className="py-2 pr-10 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
                                     placeholder="••••••••"
                                     required
                                 />
                                 <button
                                     type="button"
-                                    className="absolute inset-y-0 right-0 flex items-center pr-3"
+                                    className="flex absolute inset-y-0 right-0 items-center pr-3"
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
                                     {showPassword ? (
@@ -92,12 +120,12 @@ export default function LoginPage() {
                         </div>
 
                         {/* Links de Ajuda */}
-                        <div className="flex items-center justify-between mb-6">
+                        <div className="flex justify-between items-center mb-6">
                             <div className="flex items-center">
                                 <input
                                     id="remember-me"
                                     type="checkbox"
-                                    className="w-4 h-4 border-gray-300 rounded cursor-pointer text-primary-400 focus:ring-primary-400"
+                                    className="w-4 h-4 rounded border-gray-300 cursor-pointer text-primary-400 focus:ring-primary-400"
                                 />
                                 <label htmlFor="remember-me" className="block ml-2 text-sm text-gray-700">
                                     Lembrar-me
@@ -111,7 +139,7 @@ export default function LoginPage() {
                         {/* Botão de Login */}
                         <button
                             type="submit"
-                            className="w-full px-4 py-2 text-white transition-colors duration-200 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                            className="px-4 py-2 w-full text-white bg-gray-800 rounded-lg transition-colors duration-200 cursor-pointer hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-opacity-50"
                         >
                             Entrar
                         </button>

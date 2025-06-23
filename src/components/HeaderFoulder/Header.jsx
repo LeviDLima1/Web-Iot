@@ -1,90 +1,66 @@
 import Logo from '../../assets/Header-assets/Logo.png'
 import { IoPaw } from "react-icons/io5";
-import { Link } from 'react-router-dom'
-import { FaUser, FaSignOutAlt, FaCog, FaSignInAlt } from 'react-icons/fa'
-import { MdOutlineModeComment } from "react-icons/md";
-import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { FaUser, FaSignOutAlt, FaCog, FaSignInAlt, FaPaw, FaHome, FaListUl, FaPlus } from 'react-icons/fa'
+import { useAuth } from '../../hooks/AuthContext';
 
-export default function Header() {
+export default function Header({ children }) {
+    const { isLogged, logout } = useAuth();
+    const navigate = useNavigate();
 
-    const [isOpen, setIsOpen] = useState(false)
-    const [isLogged, setLogged] = useState(false)
-    const [counter, setCounter] = useState(0)
-
-
-    function handleClick() {
-        setIsOpen(!isOpen)
+    function handleLogout() {
+        logout();
+        navigate('/login');
     }
-
-    function handleLoggin() {
-        setLogged(!isLogged)
-    }
-
-    function CounterClick() {
-        setCounter(prevCounter => prevCounter + 1)
-    }
-
 
     return (
-        <>
-            <div className='flex items-center justify-between px-10 py-3 text-white bg-gray-800 shadow-md'>
-                <div className='flex items-center gap-2'>
-                    <IoPaw className='w-8 h-8'/>
-                    <Link to='/' className='text-2xl sour-gummy-400'>PetTracker</Link>
+        <div className="flex min-h-screen">
+            {/* Sidebar */}
+            <aside className="flex fixed flex-col px-4 py-8 w-64 min-h-screen text-white bg-gray-800 shadow-lg">
+                <div className="flex gap-2 items-center mb-10">
+                    <IoPaw className="w-8 h-8" />
+                    <Link to="/" className="text-2xl font-bold">PetTracker</Link>
                 </div>
-                <div className='flex items-center justify-center gap-6 cursor-pointer'>
-                    <div className='mb-3' onClick={CounterClick}>
-                        <div className='relative w-4 h-4 text-white bg-red-500 rounded-full top-3 right-1'>
-                            <h1 className='text-xs font-bold text-center'>
-                                {counter}
-                            </h1>
-                        </div>
-                        <MdOutlineModeComment className='w-6 h-6' />
-                    </div>
-
-                    <div className='relative'>
-                        <div className='p-2 border rounded-full' onClick={handleClick}>
-                            <FaUser className='w-6 h-6 cursor-pointer' />
-                        </div>
-
-                        {isOpen && (
-                            <div className='absolute right-0 z-10 w-48 py-1 mt-2 bg-white rounded-md shadow-lg'>
-                                {isLogged ? (
-                                    <>
-                                        <div>
-                                            <Link to={'/profile'} className='flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'>
-                                                <FaUser className='w-4 h-4' />
-                                                Perfil
-                                            </Link>
-                                        </div>
-
-                                        <div>
-                                            <Link to={'/profileConfig'} className='flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'>
-                                                <FaCog className='w-4 h-4' />
-                                                Configurações
-                                            </Link>
-                                        </div>
-
-                                        <div>
-                                            <Link to={'/'} className='flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'>
-                                                <FaSignOutAlt className='w-4 h-4' />
-                                                Sair
-                                            </Link>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div>
-                                        <Link to={'/login'} className='flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'>
-                                            <FaSignInAlt className='w-4 h-4' />
-                                            Entrar
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                <nav className="flex-1 space-y-2">
+                    <Link to="/" className="flex gap-3 items-center px-3 py-2 rounded-lg transition hover:bg-gray-700">
+                        <FaHome className="w-5 h-5" /> Dashboard
+                    </Link>
+                    <Link to="/pets" className="flex gap-3 items-center px-3 py-2 rounded-lg transition hover:bg-gray-700">
+                        <FaListUl className="w-5 h-5" /> Pets
+                    </Link>
+                    <Link to="/register-pet" className="flex gap-3 items-center px-3 py-2 rounded-lg transition hover:bg-gray-700">
+                        <FaPlus className="w-5 h-5" /> Cadastrar Pet
+                    </Link>
+                    {isLogged && (
+                        <>
+                            <Link to="/profile" className="flex gap-3 items-center px-3 py-2 rounded-lg transition hover:bg-gray-700">
+                                <FaUser className="w-5 h-5" /> Perfil
+                            </Link>
+                            <Link to="/profileConfig" className="flex gap-3 items-center px-3 py-2 rounded-lg transition hover:bg-gray-700">
+                                <FaCog className="w-5 h-5" /> Configurações
+                            </Link>
+                        </>
+                    )}
+                </nav>
+                <div className="mt-auto">
+                    {isLogged ? (
+                        <button
+                            onClick={handleLogout}
+                            className="flex gap-3 items-center px-3 py-2 w-full text-left rounded-lg transition hover:bg-gray-700"
+                        >
+                            <FaSignOutAlt className="w-5 h-5" /> Sair
+                        </button>
+                    ) : (
+                        <Link to="/login" className="flex gap-3 items-center px-3 py-2 rounded-lg transition hover:bg-gray-700">
+                            <FaSignInAlt className="w-5 h-5" /> Entrar
+                        </Link>
+                    )}
                 </div>
-            </div>
-        </>
+            </aside>
+            {/* Conteúdo principal */}
+            <main className="flex-1 min-h-screen bg-gray-50">
+                {children}
+            </main>
+        </div>
     )
 }

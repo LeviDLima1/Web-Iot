@@ -4,7 +4,7 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 
-export default function RegistredPets({ pets, toggleExpand, expandedPets, onViewHistory, onUpdateHomeArea, onEditPet, onDeletePet }) {
+export default function RegistredPets({ pets, toggleExpand, expandedPets, onViewHistory, onUpdateHomeArea, onEditPet, onDeletePet, onShowOnMap }) {
     const navigate = useNavigate();
 
     const getOnlineStatusColor = (isOnline) => {
@@ -31,8 +31,8 @@ export default function RegistredPets({ pets, toggleExpand, expandedPets, onView
     return (
         <div className="space-y-3">
             {pets.map((p) => (
-                <div key={p.id} className="transition-all border border-gray-200 rounded-xl bg-gray-50 hover:bg-gray-100">
-                    <div className="flex items-center justify-between px-4 py-3">
+                <div key={p.id} className="bg-gray-50 rounded-xl border border-gray-200 transition-all hover:bg-gray-100">
+                    <div className="flex justify-between items-center px-4 py-3">
                         <div className="flex items-center space-x-3">
                             <div className="relative">
                                 <img src={logo} alt={p.name} className="w-10 h-10 rounded-full" />
@@ -40,15 +40,23 @@ export default function RegistredPets({ pets, toggleExpand, expandedPets, onView
                                     className={`absolute -bottom-1 -right-1 w-3 h-3 ${getOnlineStatusColor(p.isOnline)}`} 
                                 />
                             </div>
-                            <div>
+                            <div className="flex items-center gap-2">
                                 <h3 className="font-semibold text-gray-800">{p.name}</h3>
-                                <div className="text-sm text-gray-600">
-                                    <p>{p.breed} • {p.age}</p>
-                                </div>
+                                {/* Botão Mostrar no Mapa */}
+                                <button
+                                    title="Mostrar no mapa"
+                                    onClick={() => onShowOnMap && onShowOnMap(p.macId)}
+                                    className="ml-1 px-2 py-1 text-xs rounded bg-green-100 text-green-700 border border-green-200 hover:bg-green-200 transition"
+                                >
+                                    📍
+                                </button>
+                            </div>
+                            <div className="text-sm text-gray-600">
+                                <p>{p.breed} • {p.age}</p>
                             </div>
                         </div>
                         <div 
-                            className="flex items-center justify-center w-8 h-8 transition-all rounded-full cursor-pointer hover:bg-gray-200"
+                            className="flex justify-center items-center w-8 h-8 rounded-full transition-all cursor-pointer hover:bg-gray-200"
                             onClick={() => toggleExpand(p.id)}
                         >
                             <FaAngleDown className={`w-4 h-4 transition-transform duration-300 ${expandedPets.includes(p.id) ? 'rotate-180' : ''}`} />
@@ -83,9 +91,9 @@ export default function RegistredPets({ pets, toggleExpand, expandedPets, onView
                                             id={`lat-${p.macId}`}
                                             type="number"
                                             step="any"
-                                            value={p.homeArea.lat}
-                                            onChange={(e) => onUpdateHomeArea(p.macId, { ...p.homeArea, lat: parseFloat(e.target.value) || 0 })}
-                                            className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
+                                            value={p.homeArea?.lat ?? ""}
+                                            onChange={(e) => onUpdateHomeArea(p.macId, { ...(p.homeArea || {}), lat: parseFloat(e.target.value) || 0 })}
+                                            className="flex-1 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary-400"
                                         />
                                     </div>
                                     <div className="flex items-center space-x-2">
@@ -94,9 +102,9 @@ export default function RegistredPets({ pets, toggleExpand, expandedPets, onView
                                             id={`lng-${p.macId}`}
                                             type="number"
                                             step="any"
-                                            value={p.homeArea.lng}
-                                            onChange={(e) => onUpdateHomeArea(p.macId, { ...p.homeArea, lng: parseFloat(e.target.value) || 0 })}
-                                            className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
+                                            value={p.homeArea?.lng ?? ""}
+                                            onChange={(e) => onUpdateHomeArea(p.macId, { ...(p.homeArea || {}), lng: parseFloat(e.target.value) || 0 })}
+                                            className="flex-1 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary-400"
                                         />
                                     </div>
                                     <div className="flex items-center space-x-2">
@@ -105,9 +113,9 @@ export default function RegistredPets({ pets, toggleExpand, expandedPets, onView
                                             id={`radius-${p.macId}`}
                                             type="number"
                                             step="any"
-                                            value={p.homeArea.radius}
-                                            onChange={(e) => onUpdateHomeArea(p.macId, { ...p.homeArea, radius: parseFloat(e.target.value) || 0 })}
-                                            className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
+                                            value={p.homeArea?.radius ?? ""}
+                                            onChange={(e) => onUpdateHomeArea(p.macId, { ...(p.homeArea || {}), radius: parseFloat(e.target.value) || 0 })}
+                                            className="flex-1 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-primary-400"
                                         />
                                     </div>
                                 </div>
@@ -116,23 +124,9 @@ export default function RegistredPets({ pets, toggleExpand, expandedPets, onView
                                 <div className="flex flex-wrap gap-2 mt-4">
                                     <button
                                         onClick={() => onViewHistory(p.macId)}
-                                        className="flex-1 px-3 py-2 text-xs font-medium text-white transition-colors rounded-lg bg-primary-400 hover:bg-primary-500"
+                                        className="flex-1 px-3 py-2 text-xs font-medium text-white rounded-lg transition-colors bg-primary-400 hover:bg-primary-500"
                                     >
                                         Ver Histórico
-                                    </button>
-                                    <button
-                                        onClick={() => handleEditPet(p)}
-                                        className="px-3 py-2 text-xs font-medium text-blue-600 transition-colors bg-blue-100 rounded-lg hover:bg-blue-200"
-                                    >
-                                        <FaEdit className="inline w-3 h-3 mr-1" />
-                                        Editar
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeletePet(p)}
-                                        className="px-3 py-2 text-xs font-medium text-red-600 transition-colors bg-red-100 rounded-lg hover:bg-red-200"
-                                    >
-                                        <FaTrash className="inline w-3 h-3 mr-1" />
-                                        Remover
                                     </button>
                                 </div>
                             </div>
@@ -142,7 +136,7 @@ export default function RegistredPets({ pets, toggleExpand, expandedPets, onView
             ))}
             <button
                 onClick={() => navigate('/register-pet')}
-                className="w-full px-4 py-2 mt-4 text-sm font-medium text-white transition-colors bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700"
+                className="px-4 py-2 mt-4 w-full text-sm font-medium text-white bg-gray-800 rounded-lg transition-colors cursor-pointer hover:bg-gray-700"
             >
                 Adicionar Novo Pet
             </button>
