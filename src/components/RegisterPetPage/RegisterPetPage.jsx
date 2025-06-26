@@ -77,13 +77,13 @@ export default function RegisterPetPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-primary-50 via-primary-100 to-accent-50">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-accent-50">
             
             <div className="px-4 py-8 sm:px-6 lg:px-8">
                 <div className="mx-auto max-w-4xl">
                     {/* Header da Página */}
                     <div className="mb-8 text-center">
-                        <div className="inline-flex justify-center items-center mb-4 w-16 h-16 text-white bg-gradient-to-r rounded-full shadow-lg from-primary-500 to-accent-500">
+                        <div className="inline-flex justify-center items-center mb-4 w-16 h-16 text-white bg-gradient-to-r from-gray-500 rounded-full shadow-lg to-accent-500">
                             <FaPaw className="w-8 h-8 text-gray-800" />
                         </div>
                         <h1 className="mb-2 text-4xl font-bold text-gray-800">Cadastrar Novo Pet</h1>
@@ -106,7 +106,7 @@ export default function RegisterPetPage() {
                             {/* Informações Básicas */}
                             <div className="mb-8">
                                 <div className="flex items-center mb-6">
-                                    <div className="flex justify-center items-center mr-3 w-10 h-10 text-white bg-gradient-to-r rounded-lg from-primary-500 to-primary-600">
+                                    <div className="flex justify-center items-center mr-3 w-10 h-10 text-white bg-gradient-to-r from-gray-500 to-gray-600 rounded-lg">
                                         <FaUser className="w-5 h-5" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-gray-800">Informações Básicas</h2>
@@ -122,7 +122,7 @@ export default function RegisterPetPage() {
                                             id="name"
                                             placeholder="Ex: Rex, Luna, Thor"
                                             {...register("name", { required: "Nome é obrigatório" })}
-                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
                                         />
                                         {errors.name && (
                                             <p className="text-sm text-red-500">{errors.name.message}</p>
@@ -138,7 +138,7 @@ export default function RegisterPetPage() {
                                             id="breed"
                                             placeholder="Ex: Golden Retriever, Persa"
                                             {...register("breed")}
-                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
                                         />
                                     </div>
 
@@ -151,7 +151,7 @@ export default function RegisterPetPage() {
                                             id="age"
                                             placeholder="Ex: 3 anos, 6 meses"
                                             {...register("age")}
-                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
                                         />
                                     </div>
 
@@ -164,7 +164,7 @@ export default function RegisterPetPage() {
                                             id="owner"
                                             placeholder="Seu nome"
                                             {...register("owner")}
-                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
                                         />
                                     </div>
 
@@ -177,7 +177,7 @@ export default function RegisterPetPage() {
                                             id="macId"
                                             placeholder="Ex: AA:BB:CC:DD:EE:FF"
                                             {...register("macId", { required: "ID da Coleira é obrigatório" })}
-                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
                                         />
                                         {errors.macId && (
                                             <p className="text-sm text-red-500">{errors.macId.message}</p>
@@ -206,7 +206,7 @@ export default function RegisterPetPage() {
                                             id="locationLat"
                                             placeholder="Ex: -23.5505"
                                             {...register("locationLat", { valueAsNumber: true })}
-                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
                                         />
                                     </div>
 
@@ -220,7 +220,7 @@ export default function RegisterPetPage() {
                                             id="locationLng"
                                             placeholder="Ex: -46.6333"
                                             {...register("locationLng", { valueAsNumber: true })}
-                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+                                            className="px-4 py-3 w-full text-gray-700 rounded-xl border border-gray-300 transition-all focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
                                         />
                                     </div>
                                 </div>
@@ -303,7 +303,7 @@ export default function RegisterPetPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-8 py-3 font-semibold text-white bg-gray-800 bg-gradient-to-r rounded-xl transition-all transform cursor-pointer from-primary-500 to-accent-500 hover:from-primary-600 hover:to-accent-600 hover:shadow-lg hover:scale-105"
+                                    className="px-8 py-3 font-semibold text-white bg-gray-800 bg-gradient-to-r from-gray-500 rounded-xl transition-all transform cursor-pointer to-accent-500 hover:from-gray-600 hover:to-accent-600 hover:shadow-lg hover:scale-105"
                                 >
                                     <FaPaw className="inline mr-2 w-4 h-4" />
                                     Cadastrar Pet

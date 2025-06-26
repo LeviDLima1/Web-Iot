@@ -34,7 +34,7 @@ export default function PetListPage() {
     };
 
     return (
-        <div className='bg-zinc-100'>
+        <div className='min-h-screen bg-zinc-100'>
             <div className="px-2 py-10 mx-auto max-w-3xl">
                 <div className="flex flex-col gap-4 mb-10 sm:flex-row sm:justify-between sm:items-center">
                     <h1 className="text-3xl font-extrabold tracking-tight text-gray-800">Pets Cadastrados</h1>
@@ -64,7 +64,7 @@ export default function PetListPage() {
                                     <img
                                         src={logo}
                                         alt={pet.name}
-                                        className="object-cover w-20 h-20 bg-white rounded-full border-4 shadow-md border-primary-200"
+                                        className="object-cover w-20 h-20 bg-white rounded-full border-4 border-gray-200 shadow-md"
                                     />
                                     <span
                                         className={`absolute bottom-0 right-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${getOnlineStatusColor(pet.isOnline)} border-white shadow`}
@@ -80,7 +80,7 @@ export default function PetListPage() {
                                     {pet.age || 'Idade não informada'}
                                 </div>
                                 <button
-                                    className="flex gap-1 items-center text-sm font-medium cursor-pointer text-primary-500 hover:underline focus:outline-none"
+                                    className="flex gap-1 items-center text-sm font-medium text-gray-700 cursor-pointer hover:underline focus:outline-none"
                                     onClick={() => toggleExpand(pet.id)}
                                     aria-label="Expandir detalhes"
                                 >
@@ -89,7 +89,7 @@ export default function PetListPage() {
                                 </button>
                             </div>
                             <div
-                                className={`transition-all duration-300 bg-primary-50 px-6 py-4 text-sm border-t border-primary-100 ${expanded.includes(pet.id) ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}
+                                className={`transition-all duration-300 bg-gray-100 px-6 py-4 text-sm border-t border-gray-200 ${expanded.includes(pet.id) ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}
                             >
                                 <div className="flex justify-between mb-1">
                                     <span className="font-medium text-gray-600">ID da Coleira:</span>
@@ -107,20 +107,20 @@ export default function PetListPage() {
                                     <div className="flex gap-2 mt-4">
                                         <button
                                             onClick={() => handleEdit(pet.id)}
-                                            className="flex gap-1 items-center px-3 py-2 text-xs font-semibold text-blue-600 bg-blue-100 rounded-lg transition-colors hover:bg-blue-200"
+                                            className="flex gap-1 items-center px-3 py-2 text-xs font-semibold text-blue-600 bg-blue-100 rounded-lg transition-colors cursor-pointer hover:bg-blue-200"
                                         >
                                             <FaEdit className="w-4 h-4" /> Editar
                                         </button>
                                         <button
                                             onClick={() => handleDelete(pet.id, pet.name)}
-                                            className="flex gap-1 items-center px-3 py-2 text-xs font-semibold text-red-600 bg-red-100 rounded-lg transition-colors hover:bg-red-200"
+                                            className="flex gap-1 items-center px-3 py-2 text-xs font-semibold text-red-600 bg-red-100 rounded-lg transition-colors cursor-pointer hover:bg-red-200"
                                         >
                                             <FaTrash className="w-4 h-4" /> Excluir
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                            <div className="absolute inset-0 rounded-2xl transition-all pointer-events-none group-hover:ring-4 group-hover:ring-primary-200"></div>
+                            <div className="absolute inset-0 rounded-2xl transition-all pointer-events-none group-hover:ring-4 group-hover:ring-gray-200"></div>
                         </div>
                     ))}
                 </div>

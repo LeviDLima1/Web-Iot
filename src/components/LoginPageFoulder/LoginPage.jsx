@@ -51,7 +51,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex justify-center items-center p-4 min-h-screen bg-gradient-to-br from-primary-300 to-primary-400">
+        <div className="flex justify-center items-center p-4 min-h-screen bg-gradient-to-br from-gray-300 to-gray-400">
             <div className="w-full max-w-md">
                 {/* Card de Login */}
                 <div className="overflow-hidden bg-white rounded-2xl shadow-xl">
@@ -80,7 +80,7 @@ export default function LoginPage() {
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className="py-2 pr-3 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
+                                    className="py-2 pr-3 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                                     placeholder="seu@email.com"
                                     required
                                 />
@@ -101,7 +101,7 @@ export default function LoginPage() {
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="py-2 pr-10 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
+                                    className="py-2 pr-10 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                                     placeholder="••••••••"
                                     required
                                 />
@@ -125,13 +125,13 @@ export default function LoginPage() {
                                 <input
                                     id="remember-me"
                                     type="checkbox"
-                                    className="w-4 h-4 rounded border-gray-300 cursor-pointer text-primary-400 focus:ring-primary-400"
+                                    className="w-4 h-4 text-gray-400 rounded border-gray-300 cursor-pointer focus:ring-gray-400"
                                 />
                                 <label htmlFor="remember-me" className="block ml-2 text-sm text-gray-700">
                                     Lembrar-me
                                 </label>
                             </div>
-                            <a href="#" className="text-sm text-primary-400 hover:text-primary-500">
+                            <a href="#" className="text-sm text-gray-400 hover:text-gray-500">
                                 Esqueceu a senha?
                             </a>
                         </div>
@@ -148,7 +148,7 @@ export default function LoginPage() {
                         <div className="mt-6 text-center">
                             <p className="text-sm text-gray-600">
                                 Não tem uma conta?{' '}
-                                <Link to={'/register'} className="font-semibold text-primary-400 hover:text-primary-500">Cadastre-se</Link>
+                                <Link to={'/register'} className="font-semibold text-gray-400 hover:text-gray-500">Cadastre-se</Link>
                             </p>
                         </div>
                     </form>

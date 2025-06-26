@@ -6,7 +6,6 @@ import RecentAlertsSection from "./RecentAlertsSection";
 import RealTimeUpdatesSection from "./RealTimeUpdatesSection";
 import { FaClock, FaWifi } from 'react-icons/fa';
 import { useState, useEffect, useRef, useCallback, useReducer } from 'react';
-import { useWebSocket } from '../../hooks/useWebSocket';
 import { useNotification } from '../../hooks/NotificationContext';
 import { usePet } from '../../hooks/PetContext'; // Importa o hook usePet
 import { useNavigate } from 'react-router-dom';
@@ -34,7 +33,6 @@ function normalizeMacId(mac) {
 }
 
 export default function HomePage() {
-    const { isConnected, messages, sendMessage } = useWebSocket();
     const { addNotification } = useNotification();
     const { allPets, updatePetLocation, updatePetAddress, updatePetHomeArea, updatePet, deletePet } = usePet(); // Usa o hook usePet
     const navigate = useNavigate();
@@ -53,9 +51,10 @@ export default function HomePage() {
     const [selectedPetHistory, setSelectedPetHistory] = useState(null);
     const [expandedPets, setExpandedPets] = useState([]);
     const [selectedPetOnMap, setSelectedPetOnMap] = useState(null);
+    const [recentAlerts, setRecentAlerts] = useState([]);
 
     const petInZoneStatus = useRef({});
-    const lastProcessedMessageIndex = useRef(-1);
+    const lastInZoneRef = useRef(null);
 
     // Inicializa petInZoneStatus com base nos petsData (agora allPets do contexto)
     useEffect(() => {
@@ -108,169 +107,116 @@ export default function HomePage() {
         }
     }, []);
 
-    // Main useEffect to process WebSocket messages
+    // POLLING: Buscar localização apenas do pet selecionado
     useEffect(() => {
-        // Only process if there are new messages
-        if (messages.length <= lastProcessedMessageIndex.current) {
-            return;
-        }
+        if (!selectedPetOnMap) return;
+        const pet = allPets.find(p => p.macId === selectedPetOnMap);
+        if (!pet) return;
 
-        const processNewMessages = async () => {
-            // Process messages from the last processed index + 1 to the current end
-            for (let i = lastProcessedMessageIndex.current + 1; i < messages.length; i++) {
-                const currentMessage = messages[i];
-
-                if (currentMessage.type === 'location_update') {
-                    const { petId, location } = currentMessage.data;
-
-                    console.log('Mensagem recebida - petId:', petId);
-                    console.log('Pets cadastrados (macId):', allPets.map(p => p.macId));
-                    console.log('Normalizados:', allPets.map(p => normalizeMacId(p.macId)), 'vs', normalizeMacId(petId));
-
-                    // Encontra o pet correspondente
-                    const petToUpdate = allPets.find(p => normalizeMacId(p.macId) === normalizeMacId(petId));
-                    if (!petToUpdate) {
-                        console.warn(`Pet com ID ${petId} não encontrado.`);
-                        continue; // Pula para a próxima mensagem se o pet não for encontrado
-                    }
-
-                    // Atualiza a localização do pet usando a função do contexto
-                    updatePetLocation(petId, location);
-
-                    // Geofencing logic usando a homeArea do pet
-                    const petToUpdateForGeofencing = allPets.find(p => normalizeMacId(p.macId) === normalizeMacId(petId));
-                    if (!petToUpdateForGeofencing) {
-                        console.warn(`Pet com ID ${petId} não encontrado para geofencing.`);
-                        return; // Sai da função se o pet não for encontrado para geofencing
-                    }
-
-                    const homeAreaLat = petToUpdateForGeofencing.homeArea.lat;
-                    const homeAreaLng = petToUpdateForGeofencing.homeArea.lng;
-                    const homeAreaRadius = petToUpdateForGeofencing.homeArea.radius; // Raio em metros
-
-                    const distance = calculateDistance(
-                        homeAreaLat,
-                        homeAreaLng,
-                        location.lat,
-                        location.lng
-                    );
-
-                    const isInsideZone = distance <= (homeAreaRadius / 1000);
-
-                    if (isInsideZone) {
-                        if (petInZoneStatus.current[petId] === false) {
-                            setDashboardData(prev => ({
-                                ...prev,
-                                safePets: prev.safePets + 1,
-                                atRiskPets: prev.atRiskPets - 1,
-                            }));
-                            addNotification(`Pet ${petToUpdateForGeofencing.name} voltou para a área segura.`, 'success');
-                        }
-                        petInZoneStatus.current[petId] = true;
-                    } else {
-                        if (petInZoneStatus.current[petId] !== false) {
-                            setDashboardData(prev => ({
-                                ...prev,
-                                alertsToday: prev.alertsToday + 1,
-                                safePets: prev.safePets - 1,
-                                atRiskPets: prev.atRiskPets + 1,
-                            }));
-                            addNotification(`ALERTA: Pet ${petToUpdateForGeofencing.name} saiu da área segura! Distância: ${distance.toFixed(2)} km`, 'error');
-                        }
-                        petInZoneStatus.current[petId] = false;
-                    }
-
-                    const newRealTimeUpdateEntry = { ...currentMessage.data, timestamp: new Date().toISOString() };
-                    dispatchRealTimeUpdates({ type: 'ADD_UPDATE', payload: newRealTimeUpdateEntry });
-
-                    getStreetAndNeighborhood(location.lat, location.lng)
-                        .then(address => {
-                            if (address) {
-                                updatePetAddress(petId, address); // Atualiza o endereço do pet usando a função do contexto
-                                dispatchRealTimeUpdates({
-                                    type: 'UPDATE_UPDATE_ADDRESS',
-                                    payload: { petId, timestamp: newRealTimeUpdateEntry.timestamp, address }
-                                });
+        const interval = setInterval(async () => {
+            try {
+                const response = await fetch(`http://192.168.18.31:3001/api/pets/${pet.id}`);
+                if (response.ok) {
+                    const updatedPet = await response.json();
+                    if (updatedPet.location) {
+                        updatePetLocation(pet.macId, updatedPet.location);
+                        // Buscar endereço (rua) via geocodificação reversa
+                        let address = null;
+                        try {
+                            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${updatedPet.location.lat}&lon=${updatedPet.location.lng}&zoom=18&addressdetails=1`);
+                            const data = await res.json();
+                            if (data && data.address) {
+                                address = {
+                                    road: data.address.road || '',
+                                    suburb: data.address.suburb || '',
+                                    display_name: data.address.display_name || ''
+                                };
                             }
-                        })
-                        .catch(error => {
-                            console.error("Erro ao buscar endereço para realTimeUpdate:", error);
-                            addNotification("Erro ao buscar endereço para atualização.", 'error');
+                        } catch (err) {
+                            address = null;
+                        }
+                        // --- ALERTA: Detectar se saiu/entrou na zona segura ---
+                        let isInZone = true;
+                        if (pet.homeArea && pet.homeArea.lat && pet.homeArea.lng && pet.homeArea.radius) {
+                            const R = 6371000;
+                            const dLat = (updatedPet.location.lat - pet.homeArea.lat) * Math.PI / 180;
+                            const dLon = (updatedPet.location.lng - pet.homeArea.lng) * Math.PI / 180;
+                            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                                Math.cos(pet.homeArea.lat * Math.PI / 180) * Math.cos(updatedPet.location.lat * Math.PI / 180) *
+                                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                            const distancia = R * c;
+                            isInZone = distancia <= pet.homeArea.radius;
+                        }
+                        if (lastInZoneRef.current === null) {
+                            // Primeira verificação ao selecionar o pet
+                            if (!isInZone) {
+                                addNotification(`ALERTA: Pet ${pet.name} está fora da zona segura!`, 'error', 6000);
+                                setRecentAlerts(prev => [
+                                    {
+                                        petName: pet.name,
+                                        time: new Date().toLocaleTimeString(),
+                                        type: 'danger',
+                                        address: address?.road || '',
+                                    },
+                                    ...prev
+                                ].slice(0, 5));
+                            }
+                        }
+                        if (lastInZoneRef.current !== null && lastInZoneRef.current !== isInZone) {
+                            const alertType = isInZone ? 'success' : 'danger';
+                            const alertMsg = isInZone
+                                ? `Pet ${pet.name} voltou para a zona segura.`
+                                : `ALERTA: Pet ${pet.name} saiu da zona segura!`;
+                            addNotification(alertMsg, alertType === 'danger' ? 'error' : 'success', 6000);
+                            setRecentAlerts(prev => [
+                                {
+                                    petName: pet.name,
+                                    time: new Date().toLocaleTimeString(),
+                                    type: alertType,
+                                    address: address?.road || '',
+                                },
+                                ...prev
+                            ].slice(0, 5));
+                        }
+                        lastInZoneRef.current = isInZone;
+                                dispatchRealTimeUpdates({
+                            type: 'ADD_UPDATE',
+                            payload: {
+                                petId: pet.macId,
+                                petName: pet.name,
+                                location: updatedPet.location,
+                                address: address,
+                                timestamp: new Date().toISOString(),
+                                battery: updatedPet.battery || 100
+                            }
                         });
+                    }
                 }
+            } catch (err) {
+                console.error('Erro ao buscar localização do pet selecionado:', err);
             }
-            lastProcessedMessageIndex.current = messages.length - 1;
-        };
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [selectedPetOnMap, allPets, updatePetLocation, addNotification]);
 
-        processNewMessages();
-
-    }, [messages, calculateDistance, getStreetAndNeighborhood, allPets, addNotification, updatePetLocation, updatePetAddress]); // Adiciona dependências do contexto
-
-    // useEffect para atualizar dashboardData quando allPets muda
-    useEffect(() => {
-        setDashboardData(prev => ({
-            ...prev,
-            totalPets: allPets.length, // Atualiza totalPets
-            onlinePets: allPets.filter(p => p.isOnline).length,
-            offlinePets: allPets.filter(p => !p.isOnline).length, // Corrigido para contar offline corretamente
-        }));
-    }, [allPets]); // Depende apenas de allPets
-
-    const toggleExpand = useCallback((petId) => {
-        setExpandedPets(prev =>
-            prev.includes(petId) ? prev.filter(id => id !== petId) : [...prev, petId]
-        );
-    }, []);
-
-    const handleViewHistory = useCallback((petId) => {
-        const pet = allPets.find(p => normalizeMacId(p.macId) === normalizeMacId(petId)); // Usa allPets do contexto
-        if (pet && pet.locationHistory) {
-            setSelectedPetHistory(pet.locationHistory);
-            console.log(`Visualizando histórico para ${pet.name}:`, pet.locationHistory);
-        } else {
-            setSelectedPetHistory(null);
-            console.log(`Histórico não encontrado para o petId: ${petId}`);
-        }
-    }, [allPets]); // Adiciona allPets como dependência
-
-    const handleUpdateHomeArea = useCallback((petId, newHomeArea) => {
-        updatePetHomeArea(petId, newHomeArea); // Usa a função do contexto
-        addNotification(`Zona segura atualizada para ${petId}.`, 'success');
-    }, [addNotification, updatePetHomeArea]); // Adiciona updatePetHomeArea como dependência
-
-    const handleEditPet = useCallback((pet) => {
-        // Navega para a página de edição do pet
-        navigate(`/edit-pet/${pet.id}`);
-    }, [navigate]);
-
-    const handleDeletePet = useCallback((petId) => {
-        deletePet(petId);
-        addNotification('Pet removido com sucesso!', 'success');
-    }, [deletePet, addNotification]);
-
-    // Função para centralizar o mapa em um pet
-    const handleShowOnMap = useCallback((macId) => {
-        setSelectedPetOnMap(macId);
-    }, []);
-
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
-            {/* Botões de navegação */}
-            <div className="flex gap-4 justify-end px-6 pt-6">
-                <button
-                    onClick={() => navigate('/pets')}
-                    className="px-4 py-2 text-white bg-gray-400 rounded-lg shadow transition cursor-pointer hover:bg-gray-500"
-                >
-                    Ver todos os pets
-                </button>
+    if (!Array.isArray(allPets) || allPets.length === 0) {
+        return (
+            <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+                <h2 className="mb-4 text-2xl font-bold text-gray-700">Nenhum pet cadastrado</h2>
+                <p className="mb-6 text-gray-500">Cadastre um pet para começar a monitorar!</p>
                 <button
                     onClick={() => navigate('/register-pet')}
-                    className="px-4 py-2 text-white bg-green-500 rounded-lg shadow transition cursor-pointer hover:bg-green-600"
+                    className="px-6 py-3 font-semibold text-white bg-green-500 rounded-xl transition hover:bg-green-600"
                 >
-                    Cadastrar novo pet
+                    Cadastrar Pet
                 </button>
             </div>
+        );
+    }
 
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {/* Dashboard Header */}
             <div className="px-6 py-8">
                 <div className="mx-auto max-w-7xl">
@@ -286,17 +232,11 @@ export default function HomePage() {
                             </div>
                             <div className="flex items-center space-x-4">
                                 <div className="flex items-center text-sm">
-                                    <FaWifi className={`mr-1 ${isConnected ? 'text-green-500' : 'text-red-500'}`} />
-                                    <span className={isConnected ? 'text-green-600' : 'text-red-600'}>
-                                        {isConnected ? 'Conectado' : 'Desconectado'}
+                                    <FaWifi className={`mr-1`} />
+                                    <span>
+                                        
                                     </span>
                                 </div>
-                                <a
-                                    href="/simulator"
-                                    className="px-4 py-2 text-sm text-white rounded-lg transition-colors bg-primary-400 hover:bg-primary-500"
-                                >
-                                    Testar Coleira
-                                </a>
                             </div>
                         </div>
                     </div>
@@ -340,13 +280,14 @@ export default function HomePage() {
                                 <div className="h-[400px] overflow-y-auto">
                                     <RegistredPets 
                                         pets={allPets} 
-                                        toggleExpand={toggleExpand} 
                                         expandedPets={expandedPets} 
-                                        onViewHistory={handleViewHistory} 
-                                        onUpdateHomeArea={handleUpdateHomeArea}
-                                        onEditPet={handleEditPet}
-                                        onDeletePet={handleDeletePet}
-                                        onShowOnMap={handleShowOnMap}
+                                        toggleExpand={(petId) =>
+                                            setExpandedPets(prev =>
+                                                prev.includes(petId) ? prev.filter(id => id !== petId) : [...prev, petId]
+                                            )
+                                        }
+                                        onShowOnMap={setSelectedPetOnMap}
+                                        selectedPetMacId={selectedPetOnMap}
                                     />
                                 </div>
                             </div>
@@ -355,10 +296,7 @@ export default function HomePage() {
 
                     {/* Área de Alertas Recentes */}
                     <div className="mt-8">
-                        <RecentAlertsSection 
-                            alertsToday={dashboardData.alertsToday} 
-                            atRiskPets={dashboardData.atRiskPets} 
-                        />
+                        <RecentAlertsSection alerts={recentAlerts} />
                     </div>
 
                     {/* Atualizações em Tempo Real */}

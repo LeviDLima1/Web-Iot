@@ -64,6 +64,7 @@ export const PetProvider = ({ children }) => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
+            console.log('Pets recebidos do backend:', data);
             if (Array.isArray(data)) {
                 dispatchPets({ type: 'SET_PETS', payload: data });
             }
@@ -136,7 +137,7 @@ export const PetProvider = ({ children }) => {
     }, []);
 
     const getPetById = useCallback((petId) => {
-        return allPets.find(pet => pet.id === petId);
+        return allPets.find(pet => String(pet.id) === String(petId));
     }, [allPets]);
 
     return (

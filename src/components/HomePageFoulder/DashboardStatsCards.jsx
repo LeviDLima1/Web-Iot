@@ -5,14 +5,14 @@ export default function DashboardStatsCards({ dashboardData }) {
     return (
         <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
             {/* Total de Pets */}
-            <div className="p-6 transition-shadow bg-white shadow-lg rounded-2xl hover:shadow-xl">
-                <div className="flex items-center justify-between">
+            <div className="p-6 bg-white rounded-2xl shadow-lg transition-shadow hover:shadow-xl">
+                <div className="flex justify-between items-center">
                     <div>
                         <p className="text-sm font-medium text-gray-600">Total de Pets</p>
                         <p className="text-3xl font-bold text-gray-800">{dashboardData.totalPets}</p>
                     </div>
-                    <div className="p-3 rounded-full bg-primary-100">
-                        <FaPaw className="text-2xl text-primary-600" />
+                    <div className="p-3 bg-gray-100 rounded-full">
+                        <FaPaw className="text-2xl text-gray-600" />
                     </div>
                 </div>
                 <div className="flex items-center mt-4 text-sm">
@@ -23,8 +23,8 @@ export default function DashboardStatsCards({ dashboardData }) {
             </div>
 
             {/* Pets Online */}
-            <div className="p-6 transition-shadow bg-white shadow-lg rounded-2xl hover:shadow-xl">
-                <div className="flex items-center justify-between">
+            <div className="p-6 bg-white rounded-2xl shadow-lg transition-shadow hover:shadow-xl">
+                <div className="flex justify-between items-center">
                     <div>
                         <p className="text-sm font-medium text-gray-600">Pets Online</p>
                         <p className="text-3xl font-bold text-green-600">{dashboardData.onlinePets}</p>
@@ -36,7 +36,7 @@ export default function DashboardStatsCards({ dashboardData }) {
                 <div className="mt-4">
                     <div className="w-full h-2 bg-gray-200 rounded-full">
                         <div 
-                            className="h-2 transition-all duration-300 bg-green-500 rounded-full"
+                            className="h-2 bg-green-500 rounded-full transition-all duration-300"
                             style={{ width: `${(dashboardData.onlinePets / dashboardData.totalPets) * 100}%` }}
                         ></div>
                     </div>
@@ -44,8 +44,8 @@ export default function DashboardStatsCards({ dashboardData }) {
             </div>
 
             {/* Alertas Hoje */}
-            <div className="p-6 transition-shadow bg-white shadow-lg rounded-2xl hover:shadow-xl">
-                <div className="flex items-center justify-between">
+            <div className="p-6 bg-white rounded-2xl shadow-lg transition-shadow hover:shadow-xl">
+                <div className="flex justify-between items-center">
                     <div>
                         <p className="text-sm font-medium text-gray-600">Alertas Hoje</p>
                         <p className="text-3xl font-bold text-yellow-600">{dashboardData.alertsToday}</p>
@@ -61,8 +61,8 @@ export default function DashboardStatsCards({ dashboardData }) {
             </div>
 
             {/* Pets Seguros */}
-            <div className="p-6 transition-shadow bg-white shadow-lg rounded-2xl hover:shadow-xl">
-                <div className="flex items-center justify-between">
+            <div className="p-6 bg-white rounded-2xl shadow-lg transition-shadow hover:shadow-xl">
+                <div className="flex justify-between items-center">
                     <div>
                         <p className="text-sm font-medium text-gray-600">Pets Seguros</p>
                         <p className="text-3xl font-bold text-blue-600">{dashboardData.safePets}</p>

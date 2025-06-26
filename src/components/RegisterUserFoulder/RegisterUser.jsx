@@ -21,8 +21,6 @@ export default function RegisterUser() {
         setError('');
         setSuccess('');
 
-        console.log('Enviando dados para o backend:', formData);
-
         if (formData.password !== formData.confirmPassword) {
             setError('As senhas não coincidem.');
             return;
@@ -40,7 +38,6 @@ export default function RegisterUser() {
             });
 
             const data = await response.json();
-            console.log('Resposta do backend:', data);
 
             if (response.ok) {
                 setSuccess('Usuário cadastrado com sucesso! Redirecionando para login...');
@@ -52,7 +49,6 @@ export default function RegisterUser() {
                 setError(data.error || 'Erro ao cadastrar usuário.');
             }
         } catch (err) {
-            console.error('Erro de conexão com o backend:', err);
             setError('Erro de conexão com o servidor.');
         }
     };
@@ -66,7 +62,7 @@ export default function RegisterUser() {
     };
 
     return (
-        <div className="flex justify-center items-center p-4 min-h-screen bg-gradient-to-br from-primary-300 to-primary-400">
+        <div className="flex justify-center items-center p-4 min-h-screen bg-gradient-to-br from-gray-300 to-gray-400">
             <div className="w-full max-w-md">
                 {/* Card de Registro */}
                 <div className="overflow-hidden bg-white rounded-2xl shadow-xl">
@@ -96,7 +92,7 @@ export default function RegisterUser() {
                                     name="name"
                                     value={formData.name}
                                     onChange={handleChange}
-                                    className="py-2 pr-3 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
+                                    className="py-2 pr-3 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                                     placeholder="Seu nome completo"
                                     required
                                 />
@@ -117,7 +113,7 @@ export default function RegisterUser() {
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className="py-2 pr-3 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
+                                    className="py-2 pr-3 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                                     placeholder="seu@email.com"
                                     required
                                 />
@@ -138,13 +134,13 @@ export default function RegisterUser() {
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="py-2 pr-10 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
+                                    className="py-2 pr-10 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                                     placeholder="••••••••"
                                     required
                                 />
                                 <button
                                     type="button"
-                                    className="flex absolute inset-y-0 right-0 items-center pr-3"
+                                    className="flex absolute inset-y-0 right-0 items-center pr-3 cursor-pointer"
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
                                     {showPassword ? (
@@ -170,13 +166,13 @@ export default function RegisterUser() {
                                     name="confirmPassword"
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
-                                    className="py-2 pr-10 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
+                                    className="py-2 pr-10 pl-10 w-full rounded-lg border border-gray-300 focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                                     placeholder="••••••••"
                                     required
                                 />
                                 <button
                                     type="button"
-                                    className="flex absolute inset-y-0 right-0 items-center pr-3"
+                                    className="flex absolute inset-y-0 right-0 items-center pr-3 cursor-pointer"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 >
                                     {showConfirmPassword ? (
@@ -193,16 +189,16 @@ export default function RegisterUser() {
                             <input
                                 id="terms"
                                 type="checkbox"
-                                className="w-4 h-4 rounded border-gray-300 cursor-pointer text-primary-400 focus:ring-primary-400"
+                                className="w-4 h-4 text-gray-500 rounded border-gray-300 cursor-pointer focus:ring-gray-400"
                                 required
                             />
                             <label htmlFor="terms" className="block ml-2 text-sm text-gray-700">
                                 Concordo com os{' '}
-                                <a href="#" className="text-primary-400 hover:text-primary-500">
+                                <a href="#" className="text-gray-500 hover:text-gray-700">
                                     Termos de Uso
                                 </a>{' '}
                                 e{' '}
-                                <a href="#" className="text-primary-400 hover:text-primary-500">
+                                <a href="#" className="text-gray-500 hover:text-gray-700">
                                     Política de Privacidade
                                 </a>
                             </label>
@@ -220,7 +216,7 @@ export default function RegisterUser() {
                         <div className="mt-6 text-center">
                             <p className="text-sm text-gray-600">
                                 Já tem uma conta?{' '}
-                                <Link to={'/login'} className="font-semibold text-primary-400 hover:text-primary-500">Fazer Login</Link>
+                                <Link to={'/login'} className="font-semibold text-gray-500 hover:text-gray-700">Fazer Login</Link>
                             </p>
                         </div>
                     </form>

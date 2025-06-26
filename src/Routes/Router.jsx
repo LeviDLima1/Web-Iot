@@ -17,13 +17,10 @@ const RegisterPetPage = React.lazy(() => import('../components/RegisterPetPage/R
 const EditPetPage = React.lazy(() => import('../components/EditPetPage/EditPetPage'));
 const PetListPage = React.lazy(() => import('../components/PetListPage'));
 
-// Ferramentas de Desenvolvimento
-const PetTrackerSimulator = React.lazy(() => import('../components/PetTrackerSimulator/PetTrackerSimulator'));
-
 export default function RouterFunction() {
     return (
         <Suspense fallback={
-            <div className="flex justify-center items-center min-h-screen text-xl text-white bg-gradient-to-br from-primary-300 to-primary-400">
+            <div className="flex justify-center items-center min-h-screen text-xl text-white bg-gradient-to-br from-gray-300 to-gray-400">
                 Carregando...
             </div>
         }>
@@ -44,18 +41,15 @@ export default function RouterFunction() {
                 <Route path="/edit-pet/:petId" element={<EditPetPage />} />
                 <Route path="/pets" element={<PetListPage />} />
 
-                {/* ===== FERRAMENTAS DE DESENVOLVIMENTO ===== */}
-                <Route path="/simulator" element={<PetTrackerSimulator />} />
-
                 {/* ===== ROTA 404 - PÁGINA NÃO ENCONTRADA ===== */}
                 <Route path="*" element={
-                    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-primary-300 to-primary-400">
+                    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-300 to-gray-400">
                         <div className="text-center">
                             <h1 className="mb-4 text-6xl font-bold text-gray-800">404</h1>
                             <p className="mb-8 text-xl text-white">Página não encontrada</p>
                             <a 
                                 href="/" 
-                                className="px-6 py-3 bg-white rounded-lg transition-colors text-primary-400 hover:bg-gray-100"
+                                className="px-6 py-3 text-gray-400 bg-white rounded-lg transition-colors hover:bg-gray-100"
                             >
                                 Voltar ao Início
                             </a>
