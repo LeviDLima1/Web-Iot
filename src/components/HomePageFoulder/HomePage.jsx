@@ -9,6 +9,7 @@ import { useState, useEffect, useRef, useCallback, useReducer } from 'react';
 import { useNotification } from '../../hooks/NotificationContext';
 import { usePet } from '../../hooks/PetContext'; // Importa o hook usePet
 import { useNavigate } from 'react-router-dom';
+import { apiGet } from '../../api';
 
 // Reducer for realTimeUpdates
 const realTimeUpdatesReducer = (state, action) => {
@@ -115,83 +116,81 @@ export default function HomePage() {
 
         const interval = setInterval(async () => {
             try {
-                const response = await fetch(`http://192.168.18.31:3001/api/pets/${pet.id}`);
-                if (response.ok) {
-                    const updatedPet = await response.json();
-                    if (updatedPet.location) {
-                        updatePetLocation(pet.macId, updatedPet.location);
-                        // Buscar endereço (rua) via geocodificação reversa
-                        let address = null;
-                        try {
-                            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${updatedPet.location.lat}&lon=${updatedPet.location.lng}&zoom=18&addressdetails=1`);
-                            const data = await res.json();
-                            if (data && data.address) {
-                                address = {
-                                    road: data.address.road || '',
-                                    suburb: data.address.suburb || '',
-                                    display_name: data.address.display_name || ''
-                                };
-                            }
-                        } catch (err) {
-                            address = null;
+                // Troca o fetch direto pelo apiGet
+                const updatedPet = await apiGet(`/pets/${pet.id}`);
+                if (updatedPet.location) {
+                    updatePetLocation(pet.macId, updatedPet.location);
+                    // Buscar endereço (rua) via geocodificação reversa
+                    let address = null;
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${updatedPet.location.lat}&lon=${updatedPet.location.lng}&zoom=18&addressdetails=1`);
+                        const data = await res.json();
+                        if (data && data.address) {
+                            address = {
+                                road: data.address.road || '',
+                                suburb: data.address.suburb || '',
+                                display_name: data.address.display_name || ''
+                            };
                         }
-                        // --- ALERTA: Detectar se saiu/entrou na zona segura ---
-                        let isInZone = true;
-                        if (pet.homeArea && pet.homeArea.lat && pet.homeArea.lng && pet.homeArea.radius) {
-                            const R = 6371000;
-                            const dLat = (updatedPet.location.lat - pet.homeArea.lat) * Math.PI / 180;
-                            const dLon = (updatedPet.location.lng - pet.homeArea.lng) * Math.PI / 180;
-                            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                                Math.cos(pet.homeArea.lat * Math.PI / 180) * Math.cos(updatedPet.location.lat * Math.PI / 180) *
-                                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-                            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                            const distancia = R * c;
-                            isInZone = distancia <= pet.homeArea.radius;
-                        }
-                        if (lastInZoneRef.current === null) {
-                            // Primeira verificação ao selecionar o pet
-                            if (!isInZone) {
-                                addNotification(`ALERTA: Pet ${pet.name} está fora da zona segura!`, 'error', 6000);
-                                setRecentAlerts(prev => [
-                                    {
-                                        petName: pet.name,
-                                        time: new Date().toLocaleTimeString(),
-                                        type: 'danger',
-                                        address: address?.road || '',
-                                    },
-                                    ...prev
-                                ].slice(0, 5));
-                            }
-                        }
-                        if (lastInZoneRef.current !== null && lastInZoneRef.current !== isInZone) {
-                            const alertType = isInZone ? 'success' : 'danger';
-                            const alertMsg = isInZone
-                                ? `Pet ${pet.name} voltou para a zona segura.`
-                                : `ALERTA: Pet ${pet.name} saiu da zona segura!`;
-                            addNotification(alertMsg, alertType === 'danger' ? 'error' : 'success', 6000);
+                    } catch (err) {
+                        address = null;
+                    }
+                    // --- ALERTA: Detectar se saiu/entrou na zona segura ---
+                    let isInZone = true;
+                    if (pet.homeArea && pet.homeArea.lat && pet.homeArea.lng && pet.homeArea.radius) {
+                        const R = 6371000;
+                        const dLat = (updatedPet.location.lat - pet.homeArea.lat) * Math.PI / 180;
+                        const dLon = (updatedPet.location.lng - pet.homeArea.lng) * Math.PI / 180;
+                        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                            Math.cos(pet.homeArea.lat * Math.PI / 180) * Math.cos(updatedPet.location.lat * Math.PI / 180) *
+                            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                        const distancia = R * c;
+                        isInZone = distancia <= pet.homeArea.radius;
+                    }
+                    if (lastInZoneRef.current === null) {
+                        // Primeira verificação ao selecionar o pet
+                        if (!isInZone) {
+                            addNotification(`ALERTA: Pet ${pet.name} está fora da zona segura!`, 'error', 6000);
                             setRecentAlerts(prev => [
                                 {
                                     petName: pet.name,
                                     time: new Date().toLocaleTimeString(),
-                                    type: alertType,
+                                    type: 'danger',
                                     address: address?.road || '',
                                 },
                                 ...prev
                             ].slice(0, 5));
                         }
-                        lastInZoneRef.current = isInZone;
-                                dispatchRealTimeUpdates({
-                            type: 'ADD_UPDATE',
-                            payload: {
-                                petId: pet.macId,
-                                petName: pet.name,
-                                location: updatedPet.location,
-                                address: address,
-                                timestamp: new Date().toISOString(),
-                                battery: updatedPet.battery || 100
-                            }
-                        });
                     }
+                    if (lastInZoneRef.current !== null && lastInZoneRef.current !== isInZone) {
+                        const alertType = isInZone ? 'success' : 'danger';
+                        const alertMsg = isInZone
+                            ? `Pet ${pet.name} voltou para a zona segura.`
+                            : `ALERTA: Pet ${pet.name} saiu da zona segura!`;
+                        addNotification(alertMsg, alertType === 'danger' ? 'error' : 'success', 6000);
+                        setRecentAlerts(prev => [
+                            {
+                                petName: pet.name,
+                                time: new Date().toLocaleTimeString(),
+                                type: alertType,
+                                address: address?.road || '',
+                            },
+                            ...prev
+                        ].slice(0, 5));
+                    }
+                    lastInZoneRef.current = isInZone;
+                            dispatchRealTimeUpdates({
+                        type: 'ADD_UPDATE',
+                        payload: {
+                            petId: pet.macId,
+                            petName: pet.name,
+                            location: updatedPet.location,
+                            address: address,
+                            timestamp: new Date().toISOString(),
+                            battery: updatedPet.battery || 100
+                        }
+                    });
                 }
             } catch (err) {
                 console.error('Erro ao buscar localização do pet selecionado:', err);

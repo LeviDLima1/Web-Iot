@@ -1,12 +1,11 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { v4 as uuidv4 } from 'uuid';
-import Header from "../HeaderFoulder/Header";
 import { useNotification } from '../../hooks/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import { usePet } from '../../hooks/PetContext';
 import { useAuth } from '../../hooks/AuthContext';
 import { FaPaw, FaMapMarkerAlt, FaShieldAlt, FaUser, FaCog, FaArrowLeft } from 'react-icons/fa';
+import { apiPost } from '../../api';
 
 export default function RegisterPetPage() {
     const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -39,6 +38,7 @@ export default function RegisterPetPage() {
             breed: data.breed,
             age: data.age,
             macId: data.macId,
+            userId: user.id,
             location: {
                 lat: data.locationLat,
                 lng: data.locationLng,
@@ -47,23 +47,13 @@ export default function RegisterPetPage() {
                 lat: data.homeAreaLat,
                 lng: data.homeAreaLng,
                 radius: data.homeAreaRadius,
-            },
-            isOnline: false,
-            lastUpdate: new Date().toLocaleTimeString(),
-            locationHistory: [],
-            userId: user.id
+            }
         };
         try {
-            const response = await fetch('http://192.168.18.31:3001/api/pets', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(newPetData)
+            const dataRes = await apiPost('/pets', newPetData, {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-            const dataRes = await response.json();
-            if (response.ok) {
+            if (!dataRes.error) {
                 addPet(dataRes); // Atualiza o contexto local
                 addNotification(`Pet ${dataRes.name} cadastrado com sucesso!`, 'success', 5000);
                 reset();

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { apiGet, apiPut, apiDelete } from '../api';
 
 const PetContext = createContext();
 
@@ -60,10 +61,9 @@ export const PetProvider = ({ children }) => {
     const fetchPets = useCallback(async () => {
         if (!user || !token) return;
         try {
-            const response = await fetch(`http://192.168.18.31:3001/api/pets/user/${user.id}`, {
+            const data = await apiGet(`/pets/user/${user.id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            const data = await response.json();
             console.log('Pets recebidos do backend:', data);
             if (Array.isArray(data)) {
                 dispatchPets({ type: 'SET_PETS', payload: data });
@@ -87,16 +87,13 @@ export const PetProvider = ({ children }) => {
     const updatePet = useCallback(async (petId, updatedData) => {
         if (!token) return;
         try {
-            const response = await fetch(`http://192.168.18.31:3001/api/pets/${petId}`, {
-                method: 'PUT',
+            const data = await apiPut(`/pets/${petId}`, updatedData, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(updatedData)
+                }
             });
-            const data = await response.json();
-            if (response.ok) {
+            if (!data.error) {
                 dispatchPets({ type: 'UPDATE_PET', payload: data });
             } else {
                 console.error('Erro ao atualizar pet:', data.error);
@@ -109,15 +106,13 @@ export const PetProvider = ({ children }) => {
     const deletePet = useCallback(async (petId) => {
         if (!token) return;
         try {
-            const response = await fetch(`http://192.168.18.31:3001/api/pets/${petId}`, {
-                method: 'DELETE',
+            const data = await apiDelete(`/pets/${petId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (response.ok) {
+            if (!data?.error) {
                 dispatchPets({ type: 'DELETE_PET', payload: petId });
             } else {
-                const data = await response.json();
-                console.error('Erro ao remover pet:', data.error);
+                console.error('Erro ao remover pet:', data?.error);
             }
         } catch (err) {
             console.error('Erro de conexão ao remover pet:', err);

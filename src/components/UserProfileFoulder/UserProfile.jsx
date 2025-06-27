@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { FaUser, FaEnvelope, FaMapMarkerAlt, FaEdit, FaCog } from 'react-icons/fa';
 import { IoPaw } from "react-icons/io5";
-import logo from "../../assets/Header-assets/Logo.png";
-import Header from '../HeaderFoulder/Header';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/AuthContext';
 import { usePet } from '../../hooks/PetContext';
+import { apiGet } from '../../api';
 
 export default function UserProfile() {
     const { user } = useAuth();
@@ -15,11 +14,8 @@ export default function UserProfile() {
     useEffect(() => {
         async function fetchUser() {
             if (user?.id) {
-                const response = await fetch(`http://localhost:3001/api/users/${user.id}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setFullUser(data);
-                }
+                const data = await apiGet(`/users/${user.id}`);
+                setFullUser(data);
             }
         }
         fetchUser();

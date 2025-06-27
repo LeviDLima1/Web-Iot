@@ -5,6 +5,7 @@ import Header from '../HeaderFoulder/Header';
 import { useAuth } from '../../hooks/AuthContext';
 import Cleave from 'cleave.js/react';
 import 'cleave.js/dist/addons/cleave-phone.br';
+import { apiPatch } from '../../api';
 
 export default function UserProfileConfig() {
     const { user } = useAuth();
@@ -96,19 +97,10 @@ export default function UserProfileConfig() {
 
     const handleSave = async () => {
         try {
-            const response = await fetch(`http://localhost:3001/api/users/${user.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(tempData)
-            });
-            if (response.ok) {
-                const updatedUser = await response.json();
-                setProfileData(updatedUser);
-                setIsEditing(false);
-                setFeedback({ type: 'success', message: 'Dados salvos com sucesso!' });
-            } else {
-                setFeedback({ type: 'error', message: 'Erro ao salvar dados!' });
-            }
+            const updatedUser = await apiPatch(`/users/${user.id}`, tempData);
+            setProfileData(updatedUser);
+            setIsEditing(false);
+            setFeedback({ type: 'success', message: 'Dados salvos com sucesso!' });
         } catch (err) {
             setFeedback({ type: 'error', message: 'Erro de conexão!' });
         }

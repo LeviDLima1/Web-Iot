@@ -3,6 +3,7 @@ import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import logo from "../../assets/Header-assets/Logo.png";
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from '../../hooks/AuthContext';
+import { apiPost } from '../../api';
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
@@ -21,14 +22,9 @@ export default function LoginPage() {
         setSuccess('');
         console.log('Enviando dados de login:', formData);
         try {
-            const response = await fetch('http://192.168.18.31:3001/api/users/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-            const data = await response.json();
+            const data = await apiPost('/users/login', formData);
             console.log('Resposta do backend (login):', data);
-            if (response.ok) {
+            if (data && !data.error) {
                 setSuccess('Login realizado com sucesso! Redirecionando...');
                 login(data.user, data.token);
                 setTimeout(() => {
@@ -51,7 +47,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex justify-center items-center p-4 min-h-screen bg-gradient-to-br from-gray-300 to-gray-400">
+        <div className="flex justify-center items-center p-4 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             <div className="w-full max-w-md">
                 {/* Card de Login */}
                 <div className="overflow-hidden bg-white rounded-2xl shadow-xl">

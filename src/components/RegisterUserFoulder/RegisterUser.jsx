@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaUser } from 'react-icons/fa';
 import logo from "../../assets/Header-assets/Logo.png";
 import { Link, useNavigate } from "react-router-dom"
+import { apiPost } from '../../api';
 
 export default function RegisterUser() {
     const [showPassword, setShowPassword] = useState(false);
@@ -27,19 +28,13 @@ export default function RegisterUser() {
         }
 
         try {
-            const response = await fetch('http://192.168.18.31:3001/api/users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: formData.name,
-                    email: formData.email,
-                    password: formData.password
-                })
+            const data = await apiPost('/users', {
+                name: formData.name,
+                email: formData.email,
+                password: formData.password
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
+            if (!data.error) {
                 setSuccess('Usuário cadastrado com sucesso! Redirecionando para login...');
                 setTimeout(() => {
                     navigate('/login');
